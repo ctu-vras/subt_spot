@@ -13,7 +13,18 @@
     <rosparam command="load" ns="joints_map" file="$(find bosdyn_spot)/config/joints/joints.yaml" />
 
     <!-- ==================== CONTROLLER ==================== -->
-    <include file="$(find champ_bringup)/launch/include/velocity_smoother.launch" />
+    <node pkg="nodelet" type="nodelet" name="velocity_smoother"
+          args="standalone yocs_velocity_smoother/VelocitySmootherNodelet" respawn="true">
+        <!-- parameters -->
+        <rosparam file="$(find champ_base)/config/velocity_smoother/velocity_smoother.yaml" command="load"/>
+        <param name="quiet" value="true" />
+        <!-- velocity commands I/O -->
+        <remap from="~/raw_cmd_vel"    to="cmd_vel"/>
+        <remap from="~/smooth_cmd_vel" to="cmd_vel/smooth"/>
+        <!-- Robot velocity feedbacks -->
+        <remap from="~/robot_cmd_vel"  to="cmd_vel"/>
+        <remap from="~/odometry"       to="odom"/>
+    </node>
 
     <node pkg="champ_base" name="champ_controller" type="quadruped_controller_node" output="screen" respawn="true">
         <param name="gazebo"                 value="true" />
