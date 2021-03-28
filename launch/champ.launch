@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<launch>
+  <arg name="name" />
+  <arg name="rviz" default="true" doc="Launch rviz" />
+
+  <group ns="$(arg name)">
+    <param name="tf_prefix" value="$(arg name)"/>
+    <param name="/use_sim_time" value="true"/>
+
+    <!-- ==================== LOAD PARAMETERS ==================== -->
+    <rosparam command="load" ns="gait"       file="$(find bosdyn_spot)/config/gait/gait.yaml" />
+    <rosparam command="load" ns="links_map"  file="$(find bosdyn_spot)/config/links/links.yaml" subst_value="true" />
+    <rosparam command="load" ns="joints_map" file="$(find bosdyn_spot)/config/joints/joints.yaml" />
+
+    <!-- ==================== CONTROLLER ==================== -->
+    <include file="$(find champ_bringup)/launch/include/velocity_smoother.launch" />
+
+    <node pkg="champ_base" name="champ_controller" type="quadruped_controller_node" output="screen" respawn="true">
+        <param name="gazebo"                 value="true" />
+        <param name="publish_joint_states"   value="false" />
+        <param name="publish_foot_contacts"  value="false" />
+        <param name="publish_joint_control"  value="true" />
+        <param name="joint_controller_topic" value="joint_group_position_controller/command" />
+        <param name="loop_rate"              value="250" />
+    </node>
+
+    <!-- ==================== STATE ESTIMATION ==================== -->
+    <node name="contact_sensor" pkg="nodelet" type="nodelet" args="standalone subt_spot/ChampContactSensor" respawn="true" />
+
+    <node pkg="champ_base" name="state_estimator" type="state_estimation_node" output="screen" respawn="true">
+        <param name="close_loop_odom" value="0" />
+        <param name="orientation_from_imu" value="true" />
+        <remap from="joint_states" to="joint_state" />
+    </node>
+
+    <node name="root_pub" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 $(arg name)/root $(arg name)" />
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="base_to_footprint_ekf" respawn="true">
+        <remap from="odometry/filtered" to="odom/local" />
+        <rosparam command="load" file="$(find bosdyn_spot)/config/ekf/base_to_footprint.yaml" />
+        <param name="base_link_frame" value="root" />
+        <param name="tf_prefix" value="$(arg name)" />
+    </node>
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="footprint_to_odom_ekf" respawn="true">
+        <remap from="odometry/filtered" to="odom" />
+        <rosparam command="load" file="$(find bosdyn_spot)/config/ekf/footprint_to_odom.yaml" />
+        <param name="tf_prefix" value="$(arg name)" />
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz" if="$(arg rviz)"
+          args="-d $(find champ_description)/rviz/urdf_viewer.rviz -f $(arg name)/base_footprint"
+          output="screen"/>
+  </group>
+</launch>

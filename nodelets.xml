@@ -1,0 +1,7 @@
+<library path="lib/libchamp_contact_sensor">
+    <class name="subt_spot/ChampContactSensor" type="subt_spot::ChampContactSensor" base_class_type="nodelet::Nodelet">
+        <description>
+            Nodelet for converting bosdyn_spot/LogicalContact messages to champ_msgs/ContactsStamped.
+        </description>
+    </class>
+</library>

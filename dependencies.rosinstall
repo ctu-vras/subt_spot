@@ -1,0 +1,12 @@
+- git:
+    local-name: champ
+    uri: https://github.com/chvmp/champ
+    version: master
+- git:  # this is not exactly needed
+    local-name: champ_teleop
+    uri: https://github.com/chvmp/champ_teleop
+    version: master
+- git:
+    local-name: yocs_velocity_smoother
+    uri: https://github.com/chvmp/yocs_velocity_smoother
+    version: master
